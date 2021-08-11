@@ -19,6 +19,13 @@ CODE GUIDELINE
 
 ]]
 
+-- libs
+NPL.load('(gl)script/apps/Aries/Creator/Game/Commands/CommandManager.lua')
+NPL.load('(gl)script/apps/Aries/Creator/Game/block_engine.lua')
+
+-- command
+local DiffWorldCommand = NPL.load('./DiffWorldCommand.lua')
+
 local DiffWorld = commonlib.inherit(commonlib.gettable('Mod.ModBase'), commonlib.gettable('Mod.DiffWorld'))
 
 DiffWorld:Property({'Name', 'DiffWorld', 'GetName', 'SetName', { auto = true }})
@@ -28,11 +35,11 @@ DiffWorld.version = '0.0.1'
 LOG.std(nil, 'info', 'DiffWorld', 'Diff world mod version: %s', DiffWorld.version)
 
 function DiffWorld:init()
-    echo('from diff world init!!!!', true)
+    DiffWorldCommand:init()
 end
 
 function DiffWorld:OnWorldLoad()
-
+    
 end
 
 

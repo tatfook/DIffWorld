@@ -1,3 +1,13 @@
+--[[
+Title: Diff World UI
+Author(s):  Big
+Date: 2021.08.09
+Desc: 
+use the lib:
+------------------------------------------------------------
+local DiffWorldUI = NPL.load('(gl)Mod/DiffWorld/DiffWorldUI.lua')
+------------------------------------------------------------
+]]
 
 local __diffs__ = __diffs__ or {
     __regions__ = {

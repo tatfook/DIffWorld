@@ -41,74 +41,73 @@
 </template>
 
 <script type="text/lua" src="%ggs%/Command/DiffWorld/DiffWorldUI.lua">
-RegisterComponent("WindowTitleBar", "%vue%/Components/WindowTitleBar.html");
+    RegisterComponent("WindowTitleBar", "%vue%/Components/WindowTitleBar.html");
 
-function region_title_class(region)
-    return "region-title " .. (region_key == region.region_key and "region-title-active" or "region-title-inactive");
-end
+    function region_title_class(region)
+        return "region-title " .. (region_key == region.region_key and "region-title-active" or "region-title-inactive");
+    end
 
-function click_region(region)
-    region_key = region.region_key;
-    chunk_list = get_chunk_list();
-end
+    function click_region(region)
+        region_key = region.region_key;
+        chunk_list = get_chunk_list();
+    end
 
-function click_chunk(chunk)
-    chunk_key = chunk.chunk_key;
-    block_list = get_block_list();
-end
+    function click_chunk(chunk)
+        chunk_key = chunk.chunk_key;
+        block_list = get_block_list();
+    end
 
-function click_block(block)
-    block_index = block.block_index;
-    block_detail = get_block_detail(block);
-end
-
+    function click_block(block)
+        block_index = block.block_index;
+        block_detail = get_block_detail(block);
+    end
 </script>
 
 <style scoped=true>
-.container {
-    width: 100%;
-    height: 100%;
-    /* height: 500px; */
-    background-color: #00000080;
-    color: #ffffff;
-}
-.regions {
-    position: absolute;
-    top: 40px;
-    bottom: 2px;
-    left: 0px;
-    right: 0px;
-    overflow: auto;
-}
-.title {
-    width: 100%;
-    height: 32px;
-    line-height: 32px;;
-}
+    .container {
+        width: 100%;
+        height: 100%;
+        /* height: 500px; */
+        background-color: #00000080;
+        color: #ffffff;
+    }
+    .regions {
+        position: absolute;
+        top: 40px;
+        bottom: 2px;
+        left: 0px;
+        right: 0px;
+        overflow: auto;
+    }
+    .title {
+        width: 100%;
+        height: 32px;
+        line-height: 32px;;
+    }
 
-.region-title {
-    padding-left: 20px;
-}
+    .region-title {
+        padding-left: 20px;
+    }
 
-.chunk-title {
-    padding-left: 40px;
-}
+    .chunk-title {
+        padding-left: 40px;
+    }
 
-.block-title {
-    padding-left: 60px;
-}
+    .block-title {
+        padding-left: 60px;
+    }
 
-.block_detail {
-    padding-left: 80px;
-    width: 100%;
-}
+    .block_detail {
+        padding-left: 80px;
+        width: 100%;
+    }
 
-.text {
-    display: flex;
-    height: 32px;
-    line-height: 32px;
-}
-.text-btn:hover {
-    color: #cccccc;
-}
+    .text {
+        display: flex;
+        height: 32px;
+        line-height: 32px;
+    }
+    .text-btn:hover {
+        color: #cccccc;
+    }
 </style>
