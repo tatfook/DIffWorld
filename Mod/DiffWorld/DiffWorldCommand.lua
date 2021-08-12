@@ -31,23 +31,41 @@ function DiffWorldCommand:init()
         ]],
         handler = function(cmd_name, cmd_text, cmd_params, from_entity)
             local cmd, cmd_text = CmdParser.ParseString(cmd_text)
-            local port = string.match(cmd_text, "-port=(%d+)")
+            local port = string.match(cmd_text, '-port=(%d+)')
+
+            port = port or 9000
 
             if not self.diffTask then
                 self.diffTask = DiffWorldTask:new()
+
+                self.diffTask:Register('DiffWorldStart', function(remote_regions)
+                    self.diffTask:MergeRegion(remote_regions)
+
+                    return self.diffTask.__regions__
+                end)
+
+                -- 响应世界比较结束
+                self.diffTask:Register('DiffWorldFinish', function()
+                    self.diffTask:DiffFinish(self.diffTask.__diffs__)
+
+                    return self.diffTask.__diffs__
+                end)
+
+                -- 响应方块信息
+                self.diffTask:Register("DiffRegionChunkInfo", function(data)
+                    return self.diffTask:LoadRegionChunkInfo(self:GetRegion(data.region_key), data.chunk_generates)
+                end)
             end
 
-            if (cmd == "open") then
+            if (cmd == 'open') then
                 self:Open()
-            elseif (cmd == "connect") then
-                self:Connect()
-            elseif (cmd == "server") then
-                self:Server()
+            elseif (cmd == 'connect') then
+                self:Connect(port)
+            elseif (cmd == 'server') then
+                self:Server(port)
             else
                 self:Open(function()
-                    self:Server(function()
-                        self:Connect()
-                    end)
+                    self:Server(port)
                 end)
             end
         end
@@ -57,7 +75,7 @@ end
 function DiffWorldCommand:Open(callback)
     self.diffTask:DownloadWorldById(nil, function(bSuccess, worldDirectory)
         if bSuccess then
-            CommandManager:RunCommand(string.format("/open paracraft://cmd/loadworld %s", worldDirectory));
+            CommandManager:RunCommand(string.format('/open paracraft://cmd/loadworld %s loadpackage="G:/code/trunk/,;G:/code/DiffWorld/" logfile="./log_diff.txt"', worldDirectory));
         end
     end)
 
@@ -66,18 +84,18 @@ function DiffWorldCommand:Open(callback)
     end
 end
 
-function DiffWorldCommand:Connect(callback)
-    self.diffTask:StartClient("127.0.0.1", port)
+function DiffWorldCommand:Connect(port, callback)
+    self.diffTask:StartClient('127.0.0.1', port)
 
-    if callback and tyype(callback) == 'function' then
+    if callback and type(callback) == 'function' then
         callback()
     end
 end
 
-function DiffWorldCommand:Server(callback)
-    self.diffTask:StartServer("0.0.0.0", port)
+function DiffWorldCommand:Server(port, callback)
+    self.diffTask:StartServer('0.0.0.0', port)
 
-    if callback and tyype(callback) == 'function' then
+    if callback and type(callback) == 'function' then
         callback()
     end
 end
