@@ -38,8 +38,86 @@ local ChunkSize = 16
 
 DiffWorldTask:Property("Local", true, "IsLocal")
 
+function DiffWorldTask:Register(...)
+    __rpc__:Register(...)
+end
+
+function DiffWorldTask:Call(...)
+    __rpc__:Call(...)
+end
+
 function DiffWorldTask:ctor()
     self:Reset()
+
+    self:Register('DiffWorldStart', function(remote_regions)
+        self:MergeRegion(remote_regions)
+
+        return self.__regions__
+    end)
+
+    -- 响应世界比较结束
+    self:Register('DiffWorldFinish', function()
+        self:DiffFinish(self.__diffs__)
+
+        return self.__diffs__
+    end)
+
+    -- 响应方块信息
+    self:Register('DiffRegionChunkInfo', function(data)
+        return self:LoadRegionChunkInfo(
+            self:GetRegion(data.region_key),
+            data.chunk_generates
+        )
+    end)
+
+    -- 响应方块比较
+    self:Register('DiffRegionChunkBlockInfo', function(data)
+        local chunk, remote_blocks = data.chunk, data.blocks
+
+        local local_blocks = self:LoadRegionChunkBlockInfo(chunk)
+        local region_key, chunk_key = chunk.region_key, chunk.chunk_key
+        local __regions__ = self.__diffs__.__regions__
+        local diff_region = __regions__[region_key] or {}
+        __regions__[region_key] = diff_region
+        local diff_region_chunk = diff_region[chunk_key] or {}
+        diff_region[chunk_key] = diff_region_chunk
+
+        for block_index, remote_block in pairs(remote_blocks) do
+            local local_block = local_blocks[block_index]
+
+            if not local_block or
+            local_block.block_id ~= remote_block.block_id or
+            local_block.block_data ~= remote_block.block_data or
+            local_block.entity_data_md5 ~= remote_block.entity_data_md5 then
+                local x, y, z = BlockEngine:FromSparseIndex(block_index)
+
+                diff_region_chunk[block_index] = {
+                    x = x, y = y, z = z,
+                    remote_block_id = remote_block.block_id,
+                    remote_block_data = remote_block.block_data,
+                    remote_entity_data = remote_block.entity_data,
+                    local_block_id = local_block and local_block.block_id,
+                    local_block_data = local_block and local_block.block_data,
+                    local_entity_data = local_block and local_block.entity_data,
+                }
+            end
+        end
+
+        for block_index, local_block in pairs(local_blocks) do
+            if not remote_blocks[block_index] then
+                local x, y, z = BlockEngine:FromSparseIndex(block_index)
+
+                diff_region_chunk[block_index] = {
+                    x = x, y = y, z = z,
+                    local_block_id = local_block.block_id,
+                    local_block_data = local_block.block_data,
+                    local_entity_data = local_block.entity_data,
+                }
+            end
+        end
+
+        return
+    end)
 end
 
 function DiffWorldTask:Reset()
@@ -143,18 +221,25 @@ function DiffWorldTask:LoadAllRegionInfo()
     ParaIO.CreateDirectory(directory)
 
     for filename in lfs.dir(directory) do
-        if string.match(filename, "%d+_%d+%.raw") then
-            local region_x, region_z = string.match(filename, "(%d+)_(%d+)%.raw")
-            local region_key = string.format("%s_%s", region_x, region_z)
+        if string.match(filename, '%d+_%d+%.raw') then
+            local region_x, region_z = string.match(filename, '(%d+)_(%d+)%.raw')
+            local region_key = string.format('%s_%s', region_x, region_z)
             local region = self:GetRegion(region_key)
 
             region.region_key = region_key
             region.region_x, region.region_z = tonumber(region_x), tonumber(region_z)
             region.block_x, region.block_z = region.region_x * RegionSize, region.region_z * RegionSize
-            region.rawpath = CommonLib.ToCanonicalFilePath(directory .. "/" .. filename)
-        elseif string.match(filename, "%d+_%d+%.region%.xml") then
-            local region_key = string.match(filename, "(%d+_%d+)%.region%.xml")
-            table.insert(entities, {region_key = region_key, xmlpath = CommonLib.ToCanonicalFilePath(directory .. "/" .. filename)})
+            region.rawpath = CommonLib.ToCanonicalFilePath(directory .. '/' .. filename)
+        elseif string.match(filename, '%d+_%d+%.region%.xml') then
+            local region_key = string.match(filename, '(%d+_%d+)%.region%.xml')
+
+            table.insert(
+                entities,
+                {
+                    region_key = region_key,
+                    xmlpath = CommonLib.ToCanonicalFilePath(directory .. '/' .. filename)
+                }
+            )
         end
     end
 
@@ -170,16 +255,8 @@ function DiffWorldTask:LoadAllRegionInfo()
     return self.__regions__
 end
 
-function DiffWorldTask:Register(...)
-    __rpc__:Register(...)
-end
-
-function DiffWorldTask:Call(...)
-    __rpc__:Call(...)
-end
-
 function DiffWorldTask:LoadRegion(region)
-    CommandManager:RunCommand("/loadregion %s %s %s", region.block_x, 5, region.block_z);
+    CommandManager:RunCommand('/loadregion %s %s %s', region.block_x, 5, region.block_z);
 end
 
 function DiffWorldTask:StartServer(ip, port)
@@ -204,23 +281,23 @@ function DiffWorldTask:StartClient(ip, port)
     local key, region, diff_regions = nil, nil, {}
 
     local function NextDiffRegionInfo()
-        key, region = next(self.__regions__, key);
+        key, region = next(self.__regions__, key)
 
-        if not region then 
+        if not region then
             return self:Call('DiffWorldFinish', nil, function(data)
-                self:DiffFinish(data);
+                self:DiffFinish(data)
             end)
         end 
 
-        if (region.is_equal_rawmd5 and region.is_equal_xmlmd5) then 
+        if region.is_equal_rawmd5 and region.is_equal_xmlmd5 then 
             -- 完全一致 比较下一个区域
-            NextDiffRegionInfo();
+            NextDiffRegionInfo()
         else
-            print(string.format("diff region: %s, is_equal_rawmd5 = %s, is_equal_xmlmd5 = %s", region.region_key, region.is_equal_rawmd5, region.is_equal_xmlmd5));
+            print(string.format('diff region: %s, is_equal_rawmd5 = %s, is_equal_xmlmd5 = %s', region.region_key, region.is_equal_rawmd5, region.is_equal_xmlmd5));
             -- entity 或 block 不同
             self:DiffRegionChunkInfo(region, function()
                 -- 对比完成
-                NextDiffRegionInfo();
+                NextDiffRegionInfo()
             end);
         end
     end
@@ -384,55 +461,6 @@ function DiffWorldTask:LoadRegionChunkBlockInfo(chunk)
     return blocks
 end
 
--- 响应方块比较
-DiffWorldTask:Register("DiffRegionChunkBlockInfo", function(data)
-    local self = DiffWorldTask
-    local chunk, remote_blocks = data.chunk, data.blocks
-    local local_blocks = self:LoadRegionChunkBlockInfo(chunk)
-    local region_key, chunk_key = chunk.region_key, chunk.chunk_key
-    local __regions__ = self.__diffs__.__regions__
-    local diff_region = __regions__[region_key] or {}
-    __regions__[region_key] = diff_region
-    local diff_region_chunk = diff_region[chunk_key] or {}
-    diff_region[chunk_key] = diff_region_chunk
-
-    for block_index, remote_block in pairs(remote_blocks) do
-        local local_block = local_blocks[block_index]
-
-        if not local_block or
-           local_block.block_id ~= remote_block.block_id or
-           local_block.block_data ~= remote_block.block_data or
-           local_block.entity_data_md5 ~= remote_block.entity_data_md5 then
-            local x, y, z = BlockEngine:FromSparseIndex(block_index)
-
-            diff_region_chunk[block_index] = {
-                x = x, y = y, z = z,
-                remote_block_id = remote_block.block_id,
-                remote_block_data = remote_block.block_data,
-                remote_entity_data = remote_block.entity_data,
-                local_block_id = local_block and local_block.block_id,
-                local_block_data = local_block and local_block.block_data,
-                local_entity_data = local_block and local_block.entity_data,
-            }
-        end
-    end
-
-    for block_index, local_block in pairs(local_blocks) do
-        if not remote_blocks[block_index] then
-            local x, y, z = BlockEngine:FromSparseIndex(block_index)
-
-            diff_region_chunk[block_index] = {
-                x = x, y = y, z = z,
-                local_block_id = local_block.block_id,
-                local_block_data = local_block.block_data,
-                local_entity_data = local_block.entity_data,
-            }
-        end
-    end
-
-    return
-end)
-
 function DiffWorldTask:DiffFinish(__diffs__)
     local __is_local__ = self:IsLocal()
     local __regions__ = __diffs__.__regions__
@@ -461,7 +489,7 @@ function DiffWorldTask:DiffFinish(__diffs__)
             __is_local__ = __is_local__,
             __diffs__ = __diffs__,
         }, {
-            url = '%ggs%/Command/DiffWorld/DiffWorldUI.html',
+            url = 'Mod/DiffWorld/DiffWorldUI.html',
             alignment = '_lt',
             width = 500,
             height = '100%',

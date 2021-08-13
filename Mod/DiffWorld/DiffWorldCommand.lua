@@ -37,24 +37,6 @@ function DiffWorldCommand:init()
 
             if not self.diffTask then
                 self.diffTask = DiffWorldTask:new()
-
-                self.diffTask:Register('DiffWorldStart', function(remote_regions)
-                    self.diffTask:MergeRegion(remote_regions)
-
-                    return self.diffTask.__regions__
-                end)
-
-                -- 响应世界比较结束
-                self.diffTask:Register('DiffWorldFinish', function()
-                    self.diffTask:DiffFinish(self.diffTask.__diffs__)
-
-                    return self.diffTask.__diffs__
-                end)
-
-                -- 响应方块信息
-                self.diffTask:Register("DiffRegionChunkInfo", function(data)
-                    return self.diffTask:LoadRegionChunkInfo(self:GetRegion(data.region_key), data.chunk_generates)
-                end)
             end
 
             if (cmd == 'open') then
