@@ -1,0 +1,14 @@
+--[[
+Title: Diff World Mcss
+Author(s):  big
+Date:  2021.08.16
+Desc: 
+use the lib:
+------------------------------------------------------------
+local DiffWorldMcss = NPL.load("(gl)Mod/DiffWorld/DiffWorldMcss.lua")
+------------------------------------------------------------
+]]
+
+{
+    
+}

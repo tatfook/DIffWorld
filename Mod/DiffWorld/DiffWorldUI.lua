@@ -9,6 +9,20 @@ local DiffWorldUI = NPL.load('(gl)Mod/DiffWorld/DiffWorldUI.lua')
 ------------------------------------------------------------
 ]]
 
+local DiffWorldUI = NPL.export()
+
+function DiffWorldUI:Show()
+    local params = Mod.WorldShare.Utils.ShowWindow(
+        400,
+        800,
+        'Mod/DiffWorld/DiffWorldUI.html',
+        'Mod.DiffWorld.DiffWorldUI',
+        0,
+        0,
+        '_lt'
+    )
+end
+
 -- Diffs data format
 --[[
 {
