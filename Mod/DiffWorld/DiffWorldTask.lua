@@ -532,10 +532,7 @@ function DiffWorldTask:DiffFinish(diffs)
     end
 
     if not self:IsRemoteWorld() then
-        -- __is_local__ = isLocal,
-        -- __diffs__ = diffs,
-
-        DiffWorldUI:Show()
+        DiffWorldUI:Show(isLocal, diffs)
     end
 end
 

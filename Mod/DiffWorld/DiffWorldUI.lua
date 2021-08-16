@@ -11,18 +11,6 @@ local DiffWorldUI = NPL.load('(gl)Mod/DiffWorld/DiffWorldUI.lua')
 
 local DiffWorldUI = NPL.export()
 
-function DiffWorldUI:Show()
-    local params = Mod.WorldShare.Utils.ShowWindow(
-        400,
-        800,
-        'Mod/DiffWorld/DiffWorldUI.html',
-        'Mod.DiffWorld.DiffWorldUI',
-        0,
-        0,
-        '_lt'
-    )
-end
-
 -- Diffs data format
 --[[
 {
@@ -62,33 +50,60 @@ end
 }
 ]]
 
-local __diffs__ = __diffs__ or { __regions__ = {} }
+DiffWorldUI.regionList = {}
+DiffWorldUI.chunkList = {}
+DiffWorldUI.blockList = {}
+DiffWorldUI.blockDetail = {}
+DiffWorldUI.regionKey = '' -- 当前区域KEY
+DiffWorldUI.chunkKey = '' -- 当前区块KEY
+DiffWorldUI.blockIndex = '' -- 当前方块索引
 
-region_list = {}
-chunk_list = {}
-block_list = {}
-block_detail = {}
-region_key = '' -- 当前区域KEY
-chunk_key = '' -- 当前区块KEY
-block_index = '' -- 当前方块索引
+function DiffWorldUI:Show(isLocal, diffs)
+    self:Reset()
 
-for region_key, region in pairs(__diffs__.__regions__) do 
-    local region_x, region_z = string.match(region_key, '(%d+)_(%d+)')
-    local chunk_count = 0
+    local diffs = diffs or { __regions__ = {} }
 
-    for _ in pairs(region) do
-        chunk_count = chunk_count + 1
+    for regionKey, region in pairs(diffs.__regions__) do 
+        local regionX, regionZ = string.match(regionKey, '(%d+)_(%d+)')
+        local chunkCount = 0
+
+        for _ in pairs(region) do
+            chunkCount = chunkCount + 1
+        end
+
+        table.insert(
+            self.regionList,
+            {
+                region_x = tonumber(regionX),
+                region_z = tonumber(regionZ),
+                region_key = regionKey,
+                chunk_count = chunkCount,
+            }
+        )
     end
 
-    table.insert(region_list, {
-        region_x = tonumber(region_x),
-        region_z = tonumber(region_z),
-        region_key = region_key,
-        chunk_count = chunk_count,
-    })
+    local params = Mod.WorldShare.Utils.ShowWindow(
+        400,
+        800,
+        'Mod/DiffWorld/DiffWorldUI.html',
+        'Mod.DiffWorld.DiffWorldUI',
+        0,
+        0,
+        '_lt'
+    )
 end
 
-function get_chunk_list()
+function DiffWorldUI:Reset()
+    self.regionList = {}
+    self.chunkList = {}
+    self.blockList = {}
+    self.blockDetail = {}
+    self.regionKey = '' -- 当前区域KEY
+    self.chunkKey = '' -- 当前区块KEY
+    self.blockIndex = '' -- 当前方块索引
+end
+
+function DiffWorldUI:GetChunkList()
     local region = __diffs__.__regions__[region_key]
     local list = {}
 
@@ -115,7 +130,7 @@ function get_chunk_list()
     return list
 end
 
-function get_block_list()
+function DiffWorldUI:GetBlockList()
     local region = __diffs__.__regions__[region_key]
     local chunk = region[chunk_key]
     local list = {}
@@ -135,7 +150,7 @@ function get_block_list()
     return list
 end
 
-function get_block_detail(block)
+function DiffWorldUI:GetBlockDetail(block)
     local region = __diffs__.__regions__[region_key]
     local chunk = region[chunk_key]
     local chunk_block = chunk[block.block_index]

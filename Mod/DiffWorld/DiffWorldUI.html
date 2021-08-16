@@ -1,9 +1,10 @@
 <html>
     <body>
         <pe:mcml>
-            <script type="text/npl" refresh="false">
+            <script type='text/npl'>
                 <![CDATA[
                     -- bottles
+                    local DiffWorldUI = NPL.load('./DiffWorldUI.lua')
 
                     -- libs
 
@@ -31,6 +32,16 @@
                     function close()
                         page:CloseWindow()
                     end
+
+                    function get_region_list()
+                        return DiffWorldUI.regionList or {}
+                    end
+
+                    function get_region_key()
+
+                    end
+
+                    category = 1
                 ]]>
             </script>
             <style type='type/mcss'>
@@ -98,41 +109,72 @@
                     </div>
                 </div>
                 <div>
-                    <div v-for="region in region_list">
-                        <div onclick="click_region(region)" class="region-title title">{{string.format("区域(%s) 区块数(%s)", region.region_key, region.chunk_count)}}</div>
-                        <div v-if="region_key == region.region_key" class="chunks">
-                            <div v-for="chunk in chunk_list">
-                                <div onclick="click_chunk(chunk)" class="chunk-title title">{{string.format("区块(%s) 方块数(%s)", chunk.chunk_key, chunk.block_count)}}</div>
-                                <div v-if="chunk_key == chunk.chunk_key">
-                                    <div v-for="block in block_list">
-                                        <div onclick="click_block(block)" class="block-title title">{{string.format("方块 坐标: %s, %s, %s", block.x, block.y, block.z)}}</div>
-                                        <div v-if="block_index == block.block_index" class="block_detail">
-                                            <div class="text">
-                                                <div style="width: 80px;">方块ID</div>
-                                                <div style="width: 40px;">{{block_detail.is_equal_block_id and "相同" or "不同"}}</div>
-                                                <div style="width: 80px;">本地ID</div>
-                                                <div style="width: 40px;">{{block_detail.local_block_id or 0}}</div>
-                                                <div style="width: 80px;">远程ID</div>
-                                                <div style="width: 40px;">{{block_detail.remote_block_id or 0}}</div>
-                                            </div>
-                                            <div class="text">
-                                                <div style="width: 80px;">方块数据</div>
-                                                <div style="width: 40px;">{{block_detail.is_equal_block_data and "相同" or "不同"}}</div>
-                                                <div style="width: 80px;">本地数据</div>
-                                                <div style="width: 40px;">{{block_detail.local_block_data or ""}}</div>
-                                                <div style="width: 80px;">远程数据</div>
-                                                <div style="width: 40px;">{{block_detail.remote_block_data or ""}}</div>
-                                            </div>
-                                            <div class="text">
-                                                <div style="width: 80px;">实体数据</div>
-                                                <div style="width: 40px;">{{block_detail.is_equal_entity_data and "相同" or "不同"}}</div>
-                                            </div>
-                                        </div>
-                                    </div>
+                    <pe:gridview DataSource='<%= get_region_list() %>'>
+                        <Columns>
+                            <pe:if condition='category == 1'>
+                                <div onclick="click_region()"
+                                     class="region-title title">
+                                    <%= string.format(L'区域(%s) 区块数(%s)', Eval('region_key'), Eval('chunk_count')) %>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
+                            </pe:if>
+                            <pe:if condition='category == 2'>
+                                <pe:if condition='<%= get_region_key() == Eval("region_key") %>'>
+                                    <div class="chunks">
+                                        <div onclick="click_chunk(chunk)" class="chunk-title title">
+                                            <%= string.format("区块(%s) 方块数(%s)", Eval('chunk')['chunk_key'], Eval('chunk')['block_count']) %>
+                                    </div>
+                                </pe:if>
+                            </pe:if>
+                            <pe:if condition='category == 3'>
+                                <pe:if condition='chunk_key == chunk.chunk_key'>
+                                    <div>
+                                        <div onclick='click_block(block)'
+                                             class="block-title title">
+                                            <%= string.format("方块 坐标: %s, %s, %s", block.x, block.y, block.z) %>
+                                        </div>
+                                        <pe:if condition='<%= block_index == block.block_index %>'>
+                                            <div class="block_detail">
+                                                <div class="text">
+                                                    <div style="width: 80px;">方块ID</div>
+                                                    <div style="width: 40px;">
+                                                        {{block_detail.is_equal_block_id and "相同" or "不同"}}
+                                                    </div>
+                                                    <div style="width: 80px;">本地ID</div>
+                                                    <div style="width: 40px;">
+                                                        {{block_detail.local_block_id or 0}}
+                                                    </div>
+                                                    <div style="width: 80px;">远程ID</div>
+                                                    <div style="width: 40px;">
+                                                        {{block_detail.remote_block_id or 0}}
+                                                    </div>
+                                                </div>
+                                                <div class="text">
+                                                    <div style="width: 80px;">方块数据</div>
+                                                    <div style="width: 40px;">
+                                                        {{block_detail.is_equal_block_data and "相同" or "不同"}}
+                                                    </div>
+                                                    <div style="width: 80px;">本地数据</div>
+                                                    <div style="width: 40px;">
+                                                        {{block_detail.local_block_data or ""}}
+                                                    </div>
+                                                    <div style="width: 80px;">远程数据</div>
+                                                    <div style="width: 40px;">
+                                                        {{block_detail.remote_block_data or ""}}
+                                                    </div>
+                                                </div>
+                                                <div class="text">
+                                                    <div style="width: 80px;">实体数据</div>
+                                                    <div style="width: 40px;">
+                                                        {{block_detail.is_equal_entity_data and "相同" or "不同"}}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </pe:if>
+                                    </div>
+                                </pe:if>
+                            </pe:if>
+                        </Columns>
+                    </pe:gridview>
                 </div>
             </div>
         </pe:mcml>
