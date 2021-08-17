@@ -39,7 +39,9 @@ function DiffWorld:init()
 end
 
 function DiffWorld:OnWorldLoad()
-    
+    if ParaEngine.GetAppCommandLineByParam('diffworld', nil) then
+        GameLogic.RunCommand('/diff2 connect')
+    end
 end
 
 

@@ -57,7 +57,12 @@ end
 function DiffWorldCommand:Open(callback)
     self.diffTask:DownloadWorldById(nil, function(bSuccess, worldDirectory)
         if bSuccess then
-            CommandManager:RunCommand(string.format('/open paracraft://cmd/loadworld %s loadpackage="G:/code/trunk/,;G:/code/DiffWorld/" logfile="./log_diff.txt"', worldDirectory));
+            CommandManager:RunCommand(
+                string.format(
+                    '/open paracraft://cmd/loadworld %s diffworld="true" loadpackage="G:/code/trunk/,;G:/code/DiffWorld/" logfile="./log_diff.txt"',
+                    worldDirectory
+                )
+            )
         end
     end)
 

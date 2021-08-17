@@ -50,18 +50,110 @@ local DiffWorldUI = NPL.export()
 }
 ]]
 
-DiffWorldUI.regionList = {}
-DiffWorldUI.chunkList = {}
-DiffWorldUI.blockList = {}
-DiffWorldUI.blockDetail = {}
-DiffWorldUI.regionKey = '' -- 当前区域KEY
-DiffWorldUI.chunkKey = '' -- 当前区块KEY
-DiffWorldUI.blockIndex = '' -- 当前方块索引
-
 function DiffWorldUI:Show(isLocal, diffs)
     self:Reset()
 
-    local diffs = diffs or { __regions__ = {} }
+    self.isLocal = isLocal
+    self.diffs = diffs or { __regions__ = {} }
+
+    -- get region list
+    self:GetRegionList()
+
+    -- get chunk list
+    for key, item in ipairs(self.regionList) do
+        local chunkList = self:GetChunkList(item.region_key)
+
+        self.chunkList[#self.chunkList + 1] = chunkList
+    end
+
+    -- get block list
+    for key, item in ipairs(self.chunkList) do
+        if item and type(item) == 'table' and #item > 0 then
+            for iKey, iItem in ipairs(item) do
+                local blockList = self:GetBlockList(iItem.region_key, iItem.chunk_key)
+
+                self.blockList[#self.blockList + 1] = blockList
+            end
+        end
+    end
+
+    -- convert to 1 dimension array
+    for key, item in ipairs(self.regionList) do
+        item.category = 1
+        item.is_show = true
+        self.comprehansiveList[#self.comprehansiveList + 1] = item
+
+        local chunk = self.chunkList[key]
+
+        for cKey, cItem in ipairs(chunk) do
+            cItem.category = 2
+            cItem.is_show = false
+            self.comprehansiveList[#self.comprehansiveList + 1] = cItem
+
+            local block = self.blockList[cKey]
+
+            for bKey, bItem in ipairs(block) do
+                bItem.category = 3
+                bItem.chunk_key = cItem.chunk_key
+                bItem.is_show = false
+                self.comprehansiveList[#self.comprehansiveList + 1] = bItem
+
+                local blockDetail = self:GetBlockDetail(bItem, cItem.region_key, cItem.chunk_key)
+                blockDetail.category = 4
+                blockDetail.is_show = false
+                self.comprehansiveList[#self.comprehansiveList + 1] = blockDetail
+            end
+        end 
+    end
+
+    local params = Mod.WorldShare.Utils.ShowWindow(
+        400,
+        800,
+        'Mod/DiffWorld/DiffWorldUI.html',
+        'Mod.DiffWorld.DiffWorldUI',
+        0,
+        0,
+        '_lt'
+    )
+
+    self:RefreshTree()
+end
+
+function DiffWorldUI:Reset()
+    self.comprehansiveList = {}
+    self.comprehansiveFilterList = {}
+    self.regionList = {}
+    self.chunkList = {}
+    self.blockList = {}
+    self.blockDetail = {}
+    self.regionKey = '' -- 当前区域KEY
+    self.chunkKey = '' -- 当前区块KEY
+    self.blockIndex = '' -- 当前方块索引
+    self.isLocal = nil
+    self.diffs = { __regions__ = {} }
+end
+
+function DiffWorldUI:RefreshTree()
+    local page = Mod.WorldShare.Store:Get('page/Mod.DiffWorld.DiffWorldUI')
+
+    if not page then
+        return
+    end
+
+    -- remove hide item
+    self.comprehansiveFilterList = {}
+
+    for key, item in ipairs(DiffWorldUI.comprehansiveList) do
+        if item and item.is_show == true then
+            self.comprehansiveFilterList[#self.comprehansiveFilterList + 1] = item
+        end
+    end
+
+    page:GetNode('diff_tree'):SetUIAttribute('DataSource', self.comprehansiveFilterList)
+end
+
+function DiffWorldUI:GetRegionList()
+    local diffs = self.diffs
 
     for regionKey, region in pairs(diffs.__regions__) do 
         local regionX, regionZ = string.match(regionKey, '(%d+)_(%d+)')
@@ -81,48 +173,32 @@ function DiffWorldUI:Show(isLocal, diffs)
             }
         )
     end
-
-    local params = Mod.WorldShare.Utils.ShowWindow(
-        400,
-        800,
-        'Mod/DiffWorld/DiffWorldUI.html',
-        'Mod.DiffWorld.DiffWorldUI',
-        0,
-        0,
-        '_lt'
-    )
 end
 
-function DiffWorldUI:Reset()
-    self.regionList = {}
-    self.chunkList = {}
-    self.blockList = {}
-    self.blockDetail = {}
-    self.regionKey = '' -- 当前区域KEY
-    self.chunkKey = '' -- 当前区块KEY
-    self.blockIndex = '' -- 当前方块索引
-end
+function DiffWorldUI:GetChunkList(regionKey)
+    if not regionKey then
+        return
+    end
 
-function DiffWorldUI:GetChunkList()
-    local region = __diffs__.__regions__[region_key]
+    local region = self.diffs.__regions__[regionKey]
     local list = {}
 
-    for chunk_key, chunk in pairs(region) do
-        local chunk_x, chunk_z = string.match(chunk_key, "(%d+)_(%d+)")
-        local block_count = 0
+    for chunkKey, chunk in pairs(region) do
+        local chunkX, chunkZ = string.match(chunkKey, '(%d+)_(%d+)')
+        local blockCount = 0
 
         for _ in pairs(chunk) do
-            block_count = block_count + 1
+            blockCount = blockCount + 1
         end
 
         table.insert(
             list,
             {
-                chunk_x = tonumber(chunk_x),
-                chunk_z = tonumber(chunk_z),
-                chunk_key = chunk_key,
-                region_key = region_key,
-                block_count = block_count,
+                chunk_x = tonumber(chunkX),
+                chunk_z = tonumber(chunkZ),
+                chunk_key = chunkKey,
+                region_key = regionKey,
+                block_count = blockCount,
             }
         )
     end
@@ -130,19 +206,24 @@ function DiffWorldUI:GetChunkList()
     return list
 end
 
-function DiffWorldUI:GetBlockList()
-    local region = __diffs__.__regions__[region_key]
-    local chunk = region[chunk_key]
+function DiffWorldUI:GetBlockList(regionKey, chunkKey)
+    if not regionKey or not chunkKey then
+        return
+    end
+
+    local region = self.diffs.__regions__[regionKey]
+    local chunk = region[chunkKey]
+
     local list = {}
 
-    for block_index, block in pairs(chunk) do
+    for blockIndex, block in pairs(chunk) do
         table.insert(
             list,
             {
                 x = block.x,
                 y = block.y,
                 z= block.z,
-                block_index = block_index
+                block_index = blockIndex
             }
         )
     end
@@ -150,10 +231,14 @@ function DiffWorldUI:GetBlockList()
     return list
 end
 
-function DiffWorldUI:GetBlockDetail(block)
-    local region = __diffs__.__regions__[region_key]
-    local chunk = region[chunk_key]
-    local chunk_block = chunk[block.block_index]
+function DiffWorldUI:GetBlockDetail(block, regionKey, chunkKey)
+    if not block or not regionKey or not chunkKey then
+        return
+    end
+
+    local region = self.diffs.__regions__[regionKey]
+    local chunk = region[chunkKey]
+    local chunkBlock = chunk[block.block_index]
     local detail = {
         x = block.x,
         y = block.y,
@@ -161,22 +246,22 @@ function DiffWorldUI:GetBlockDetail(block)
         block_index = block.block_index
     }
 
-    if __is_local__ then
-        detail.local_block_id = chunk_block.local_block_id
-        detail.local_block_data = chunk_block.local_block_data
-        detail.local_entity_data = chunk_block.local_entity_data
+    if self.isLocal then
+        detail.local_block_id = chunkBlock.local_block_id
+        detail.local_block_data = chunkBlock.local_block_data
+        detail.local_entity_data = chunkBlock.local_entity_data
 
-        detail.remote_block_id = chunk_block.remote_block_id
-        detail.remote_block_data = chunk_block.remote_block_data
-        detail.remote_entity_data = chunk_block.remote_entity_data
+        detail.remote_block_id = chunkBlock.remote_block_id
+        detail.remote_block_data = chunkBlock.remote_block_data
+        detail.remote_entity_data = chunkBlock.remote_entity_data
     else
-        detail.remote_block_id = chunk_block.local_block_id
-        detail.remote_block_data = chunk_block.local_block_data
-        detail.remote_entity_data = chunk_block.local_entity_data
+        detail.remote_block_id = chunkBlock.local_block_id
+        detail.remote_block_data = chunkBlock.local_block_data
+        detail.remote_entity_data = chunkBlock.local_entity_data
 
-        detail.local_block_id = chunk_block.remote_block_id
-        detail.local_block_data = chunk_block.remote_block_data
-        detail.local_entity_data = chunk_block.remote_entity_data
+        detail.local_block_id = chunkBlock.remote_block_id
+        detail.local_block_data = chunkBlock.remote_block_data
+        detail.local_entity_data = chunkBlock.remote_entity_data
     end
 
     detail.is_equal_block_id = detail.local_block_id == detail.remote_block_id
