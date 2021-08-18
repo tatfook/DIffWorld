@@ -83,10 +83,10 @@ function DiffWorldTask:ctor()
         local regionKey = chunk.region_key
         local chunkKey = chunk.chunk_key
 
-        local __regions__ = self.__diffs__.__regions__
+        local regions = self.__diffs__.__regions__
 
-        local diffRegion = __regions__[regionKey] or {}
-        __regions__[regionKey] = diffRegion
+        local diffRegion = regions[regionKey] or {}
+        regions[regionKey] = diffRegion
 
         local diffRegionChunk = diffRegion[chunkKey] or {}
         diffRegion[chunkKey] = diffRegionChunk
@@ -430,7 +430,7 @@ function DiffWorldTask:LoadRegionChunkInfo(region, chunkGenerates)
             end
 
             local isGenerate = self:IsGenerateChunk(chunkX, chunkZ)
-            local chunkV = (isGenerate) and (ParaTerrain.GetMapChunkData(chunkX, chunkZ, false, 0xffff)) or ''
+            local chunkV = isGenerate and ParaTerrain.GetMapChunkData(chunkX, chunkZ, false, 0xffff) or ''
             local chunkMd5 = CommonLib.MD5(chunkV)
             local chunk = region.chunks[chunkKey] or {}
 
@@ -487,6 +487,7 @@ function DiffWorldTask:LoadRegionChunkBlockInfo(chunk)
                 local index = BlockEngine:GetSparseIndex(x, y, z)
                 local blockId, blockData, entityData = BlockEngine:GetBlockFull(x, y, z)
 
+                
                 -- 无实体数据且方块相同则不同步
                 if blockId and blockId ~= 0 then
                     entityData = entityData and commonlib.serialize_compact(entityData)

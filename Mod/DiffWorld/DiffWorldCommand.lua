@@ -20,14 +20,14 @@ local DiffWorldTask = NPL.load('./DiffWorldTask.lua')
 local DiffWorldCommand = NPL.export()
 
 function DiffWorldCommand:init()
-    Commands["diff2"] = {
+    Commands["diff"] = {
         mode_deny = "",
-        name = "diff2",
-        quick_ref = "/diff2 open|connect|server -port=9000",
+        name = "diff",
+        quick_ref = "/diff open|connect|server -port=9000",
         desc = [[
-    /diffworld open 新起Paracraft客户端并打开当前世界的最新版本
-    /diffworld connect -port=9000 连接对比的远程世界并开始对比世界,  -port 可指定连接端口, 默认9000
-    /diffworld server -port=9000 启动对比世界服务器, -port 指定监听端口 默认9000
+    /diff open 新起Paracraft客户端并打开当前世界的最新版本
+    /diff connect -port=9000 连接对比的远程世界并开始对比世界,  -port 可指定连接端口, 默认9000
+    /diff server -port=9000 启动对比世界服务器, -port 指定监听端口 默认9000
         ]],
         handler = function(cmd_name, cmd_text, cmd_params, from_entity)
             local cmd, cmd_text = CmdParser.ParseString(cmd_text)

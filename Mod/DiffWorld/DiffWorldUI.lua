@@ -9,6 +9,9 @@ local DiffWorldUI = NPL.load('(gl)Mod/DiffWorld/DiffWorldUI.lua')
 ------------------------------------------------------------
 ]]
 
+-- libs
+local ItemClient = commonlib.gettable('MyCompany.Aries.Game.Items.ItemClient')
+
 local DiffWorldUI = NPL.export()
 
 -- Diffs data format
@@ -84,27 +87,42 @@ function DiffWorldUI:Show(isLocal, diffs)
         self.comprehansiveList[#self.comprehansiveList + 1] = item
 
         local chunk = self.chunkList[key]
+        local codeBlocks = {}
+        local movieBlocks = {}
+        local otherBlocks = {}
 
         for cKey, cItem in ipairs(chunk) do
-            cItem.category = 2
-            cItem.is_show = false
-            self.comprehansiveList[#self.comprehansiveList + 1] = cItem
-
             local block = self.blockList[cKey]
 
             for bKey, bItem in ipairs(block) do
-                bItem.category = 3
-                bItem.chunk_key = cItem.chunk_key
-                bItem.is_show = false
-                self.comprehansiveList[#self.comprehansiveList + 1] = bItem
+                -- code block ID is: 219
+                -- movie block ID is: 228
 
-                local blockDetail = self:GetBlockDetail(bItem, cItem.region_key, cItem.chunk_key)
-                blockDetail.category = 4
-                blockDetail.is_show = false
-                self.comprehansiveList[#self.comprehansiveList + 1] = blockDetail
+                -- TODO: // merge blocks
+                --curRegionBlocks
+                echo(bItem, true)
             end
-        end 
+        end
+
+        -- bItem.category = 2
+        -- bItem.region_key = cItem.region_key
+        -- bItem.is_show = false
+
+        -- local blockDetail = self:GetBlockDetail(bItem, cItem.region_key, cItem.chunk_key)
+
+        -- blockDetail.category = 3
+        -- blockDetail.is_show = false
+
+        -- local blockName = ItemClient.CreateGetByBlockID(blockDetail.remote_block_id):GetDisplayName()
+
+        -- bItem.block_name = blockName
+        -- blockDetail.block_name = blockName
+
+        -- self.comprehansiveList[#self.comprehansiveList + 1] = bItem
+        -- self.comprehansiveList[#self.comprehansiveList + 1] = blockDetail
     end
+
+    echo(self.comprehansiveList, true)
 
     local params = Mod.WorldShare.Utils.ShowWindow(
         400,
@@ -239,6 +257,7 @@ function DiffWorldUI:GetBlockDetail(block, regionKey, chunkKey)
     local region = self.diffs.__regions__[regionKey]
     local chunk = region[chunkKey]
     local chunkBlock = chunk[block.block_index]
+
     local detail = {
         x = block.x,
         y = block.y,

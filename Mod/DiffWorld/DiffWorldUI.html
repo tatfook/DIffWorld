@@ -22,36 +22,8 @@
                         for key, item in ipairs(DiffWorldUI.comprehansiveList) do
                             if item.category == 2 and item.region_key == region_key then
                                 if item.is_show then
-                                    item.is_show = false
-
                                     -- hide chunk and blocks
-                                    for hKey, hItem in ipairs(DiffWorldUI.comprehansiveList) do
-                                        if hItem.category == 3 and hItem.chunk_key == item.chunk_key then
-                                            hItem.is_show = false
-
-                                            DiffWorldUI.comprehansiveList[hKey + 1].is_show = false
-                                        end
-                                    end
-                                else
-                                    item.is_show = true
-                                end
-                            end
-                        end
-
-                        DiffWorldUI:RefreshTree()
-                    end
-
-                    function click_chunk(index)
-                        local comprehansive_filter_list = DiffWorldUI.comprehansiveFilterList
-                        local cur_item = comprehansive_filter_list[index]
-                        local chunk_key = cur_item.chunk_key
-
-                        for key, item in ipairs(DiffWorldUI.comprehansiveList) do
-                            if item.category == 3 and item.chunk_key == chunk_key then
-                                if item.is_show then
                                     item.is_show = false
-
-                                    -- hide block detail
                                     DiffWorldUI.comprehansiveList[key + 1].is_show = false
                                 else
                                     item.is_show = true
@@ -68,7 +40,7 @@
                         local block_index = cur_item.block_index
 
                         for key, item in ipairs(DiffWorldUI.comprehansiveList) do
-                            if item.category == 4 and item.block_index == block_index then
+                            if item.category == 3 and item.block_index == block_index then
                                 if item.is_show then
                                     item.is_show = false
                                 else
@@ -167,24 +139,10 @@
                                            onclick='click_region'
                                            style='position: relative;
                                                   background:;' />
-                                    <%= string.format(L'区域(%s) 区块数(%s)', Eval('region_key'), Eval('chunk_count')) %>
+                                    <%= string.format(L'%s %s地块：', Eval('region_x'), Eval('region_z')) %>
                                 </div>
                             </pe:if>
                             <pe:if condition='<%= Eval("category") == 2 and Eval("is_show") == true %>'>
-                                <div class='chunks'>
-                                    <div class="chunk-title title">
-                                        <input type='button'
-                                           width='100%'
-                                           height='100%'
-                                           name='<%= Eval("index") %>'
-                                           onclick='click_chunk'
-                                           style='position: relative;
-                                                  background:;' />
-                                        <%= string.format("区块(%s) 方块数(%s)", Eval('chunk_key'), Eval('block_count')) %>
-                                    </div>
-                                </div>
-                            </pe:if>
-                            <pe:if condition='<%= Eval("category") == 3 and Eval("is_show") == true %>'>
                                 <div>
                                     <div class="block-title title">
                                         <input type='button'
@@ -194,11 +152,17 @@
                                                onclick='click_block'
                                                style='position: relative;
                                                       background:;' />
-                                        <%= string.format('方块 坐标: %s, %s, %s', Eval('x'), Eval('y'), Eval('z')) %>
+                                        <%= string.format(
+                                                '%s方块 坐标: %s, %s, %s',
+                                                Eval('block_name'),
+                                                Eval('x'),
+                                                Eval('y'),
+                                                Eval('z')
+                                            ) %>
                                     </div>
                                 </div>
                             </pe:if>
-                            <pe:if condition='<%= Eval("category") == 4 and Eval("is_show") == true %>'>
+                            <pe:if condition='<%= Eval("category") == 3 and Eval("is_show") == true %>'>
                                 <div class='block_detail'>
                                     <div class='text'>
                                         <div style='float:left;width: 80px;'><%= L'方块ID' %></div>
