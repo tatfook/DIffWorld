@@ -82,10 +82,6 @@ function DiffWorldUI:Show(isLocal, diffs)
 
     -- convert to 1 dimension array
     for key, item in ipairs(self.regionList) do
-        item.category = 1
-        item.is_show = true
-        self.comprehansiveList[#self.comprehansiveList + 1] = item
-
         local chunk = self.chunkList[key]
         local codeBlocks = {}
         local movieBlocks = {}
@@ -98,31 +94,201 @@ function DiffWorldUI:Show(isLocal, diffs)
                 -- code block ID is: 219
                 -- movie block ID is: 228
 
-                -- TODO: // merge blocks
-                --curRegionBlocks
-                echo(bItem, true)
+                -- remote_block_id is: history world
+                -- local_block_id is: current edit world
+
+                local blockDetail = self:GetBlockDetail(bItem, cItem.region_key, cItem.chunk_key)
+
+                blockDetail.category = 3
+                blockDetail.region_key = item.region_key
+                blockDetail.is_show = false
+
+                -- modify blocks
+                if blockDetail.local_block_id and blockDetail.remote_block_id then
+                    local blockName = ItemClient.CreateGetByBlockID(blockDetail.local_block_id):GetDisplayName()
+                    blockDetail.block_name = blockName
+                    blockDetail.operate = 'MODIFY'
+
+                    if blockDetail.local_block_id == 219 then
+                        -- code blocks
+                        blockDetail.block_type = 'CODE_BLOCKS'
+                        codeBlocks[#codeBlocks + 1] = blockDetail
+                    elseif blockDetail.local_block_id == 228 then
+                        -- movie blocks
+                        blockDetail.block_type = 'MOVIE_BLOCKS'
+                        movieBlocks[#movieBlocks + 1] = blockDetail
+                    else
+                        -- other blocks
+                        blockDetail.block_type = 'OTHER_BLOCKS'
+                        otherBlocks[#otherBlocks + 1] = blockDetail
+                    end
+                end
+
+                -- remove blocks
+                if not blockDetail.local_block_id and blockDetail.remote_block_id then
+                    local blockName = ItemClient.CreateGetByBlockID(blockDetail.remote_block_id):GetDisplayName()
+                    blockDetail.block_name = blockName
+                    blockDetail.operate = 'DELETE'
+
+                    if blockDetail.local_block_id == 219 then
+                        -- code blocks
+                        blockDetail.block_type = 'CODE_BLOCKS'
+                        codeBlocks[#codeBlocks + 1] = blockDetail
+                    elseif blockDetail.local_block_id == 228 then
+                        -- movie blocks
+                        blockDetail.block_type = 'MOVIE_BLOCKS'
+                        movieBlocks[#movieBlocks + 1] = blockDetail
+                    else
+                        -- other blocks
+                        blockDetail.block_type = 'OTHER_BLOCKS'
+                        otherBlocks[#otherBlocks + 1] = blockDetail
+                    end
+                end
+
+                -- add blocks
+                if blockDetail.local_block_id and not blockDetail.remote_block_id then
+                    local blockName = ItemClient.CreateGetByBlockID(blockDetail.local_block_id):GetDisplayName()
+                    blockDetail.block_name = blockName
+                    blockDetail.operate = 'ADD'
+
+                    if blockDetail.local_block_id == 219 then
+                        -- code blocks
+                        blockDetail.block_type = 'CODE_BLOCKS'
+                        codeBlocks[#codeBlocks + 1] = blockDetail
+                    elseif blockDetail.local_block_id == 228 then
+                        -- movie blocks
+                        blockDetail.block_type = 'MOVIE_BLOCKS'
+                        movieBlocks[#movieBlocks + 1] = blockDetail
+                    else
+                        -- other blocks
+                        blockDetail.block_type = 'OTHER_BLOCKS'
+                        otherBlocks[#otherBlocks + 1] = blockDetail
+                    end
+                end
             end
         end
 
-        -- bItem.category = 2
-        -- bItem.region_key = cItem.region_key
-        -- bItem.is_show = false
+        -- count add/delete/modify
 
-        -- local blockDetail = self:GetBlockDetail(bItem, cItem.region_key, cItem.chunk_key)
+        local codeBlocksCountAdd = 0
+        local codeBlocksCountDelete = 0
+        local codeBlocksCountModify = 0
 
-        -- blockDetail.category = 3
-        -- blockDetail.is_show = false
+        for cKey, cItem in ipairs(codeBlocks) do
+            if cItem and cItem.operate == 'ADD' then
+                codeBlocksCountAdd = codeBlocksCountAdd + 1
+            end
 
-        -- local blockName = ItemClient.CreateGetByBlockID(blockDetail.remote_block_id):GetDisplayName()
+            if cItem and cItem.operate == 'DELETE' then
+                codeBlocksCountDelete = codeBlocksCountDelete + 1
+            end
 
-        -- bItem.block_name = blockName
-        -- blockDetail.block_name = blockName
+            if cItem and cItem.operate == 'MODIFY' then
+                codeBlocksCountModify = codeBlocksCountModify + 1
+            end
+        end
 
-        -- self.comprehansiveList[#self.comprehansiveList + 1] = bItem
-        -- self.comprehansiveList[#self.comprehansiveList + 1] = blockDetail
+        local movieBlocksCountAdd = 0
+        local movieBlocksCountDelete = 0
+        local movieBlocksCountModify = 0
+
+        for cKey, cItem in ipairs(movieBlocks) do
+            if cItem and cItem.operate == 'ADD' then
+                movieBlocksCountAdd = movieBlocksCountAdd + 1
+            end
+
+            if cItem and cItem.operate == 'DELETE' then
+                movieBlocksCountDelete = movieBlocksCountDelete + 1
+            end
+
+            if cItem and cItem.operate == 'MODIFY' then
+                movieBlocksCountModify = movieBlocksCountModify + 1
+            end
+        end
+
+        local otherBlocksCountAdd = 0
+        local otherBlocksCountDelete = 0
+        local otherBlocksCountModify = 0
+
+        for cKey, cItem in ipairs(otherBlocks) do
+            if cItem and cItem.operate == 'ADD' then
+                otherBlocksCountAdd = otherBlocksCountAdd + 1
+            end
+
+            if cItem and cItem.operate == 'DELETE' then
+                otherBlocksCountDelete = otherBlocksCountDelete + 1
+            end
+
+            if cItem and cItem.operate == 'MODIFY' then
+                otherBlocksCountModify = otherBlocksCountModify + 1
+            end
+        end
+
+        item.category = 1
+        item.is_show = true
+        item.count_add = codeBlocksCountAdd + movieBlocksCountAdd + otherBlocksCountAdd
+        item.count_delete = codeBlocksCountDelete + movieBlocksCountDelete + otherBlocksCountDelete
+        item.count_modify = codeBlocksCountModify + movieBlocksCountModify + otherBlocksCountModify
+
+        self.comprehansiveList[#self.comprehansiveList + 1] = item
+
+        if codeBlocks and #codeBlocks > 0 then
+            local codeBlocksTitle = {
+                category = 2,
+                title = L'代码方块',
+                block_type = 'CODE_BLOCKS',
+                region_key = item.region_key,
+                is_show = false,
+                count_add = codeBlocksCountAdd,
+                count_delete = codeBlocksCountDelete,
+                count_modify = codeBlocksCountModify,
+            }
+
+            self.comprehansiveList[#self.comprehansiveList + 1] = codeBlocksTitle
+
+            for key, item in ipairs(codeBlocks) do
+                self.comprehansiveList[#self.comprehansiveList + 1] = item
+            end
+        end
+
+        if movieBlocks and #movieBlocks > 0 then
+            local movieBlocksTitle = {
+                category = 2,
+                title = L'电影方块',
+                block_type = 'MOVIE_BLOCKS',
+                region_key = item.region_key,
+                is_show = false,
+                count_add = movieBlocksCountAdd,
+                count_delete = movieBlocksCountDelete,
+                count_modify = movieBlocksCountModify,
+            }
+
+            self.comprehansiveList[#self.comprehansiveList + 1] = movieBlocksTitle
+    
+            for key, item in ipairs(movieBlocks) do
+                self.comprehansiveList[#self.comprehansiveList + 1] = item
+            end
+        end
+
+        if otherBlocks and #otherBlocks > 0 then
+            local otherBlocksTitle = {
+                category = 2,
+                title = L'其他方块',
+                block_type = 'OTHER_BLOCKS',
+                region_key = item.region_key,
+                is_show = false,
+                count_add = otherBlocksCountAdd,
+                count_delete = otherBlocksCountDelete,
+                count_modify = otherBlocksCountModify,
+            }
+
+            self.comprehansiveList[#self.comprehansiveList + 1] = otherBlocksTitle
+    
+            for key, item in ipairs(otherBlocks) do
+                self.comprehansiveList[#self.comprehansiveList + 1] = item
+            end
+        end
     end
-
-    echo(self.comprehansiveList, true)
 
     local params = Mod.WorldShare.Utils.ShowWindow(
         400,

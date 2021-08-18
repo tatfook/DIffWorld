@@ -52,21 +52,21 @@ function DiffWorldTask:ctor()
     self:Reset()
 
     -- Responsive compare world start
-    self:Register('DiffWorldStart', function(remote_regions)
+    self:Register('DiffWorldStartRpc', function(remote_regions)
         self:CompareRegion(remote_regions)
 
         return self.__regions__
     end)
 
     -- 响应世界比较结束
-    self:Register('DiffWorldFinish', function()
+    self:Register('DiffWorldFinishRpc', function()
         self:DiffFinish(self.__diffs__)
 
         return self.__diffs__
     end)
 
     -- 响应方块信息
-    self:Register('DiffRegionChunkInfo', function(data)
+    self:Register('DiffRegionChunkInfoRpc', function(data)
         return self:LoadRegionChunkInfo(
             self:GetRegion(data.region_key),
             data.chunk_generates
@@ -74,7 +74,7 @@ function DiffWorldTask:ctor()
     end)
 
     -- 响应方块比较
-    self:Register('DiffRegionChunkBlockInfo', function(data)
+    self:Register('DiffRegionChunkBlockInfoRpc', function(data)
         local chunk = data.chunk
 
         local remoteBlocks = data.blocks
@@ -91,6 +91,7 @@ function DiffWorldTask:ctor()
         local diffRegionChunk = diffRegion[chunkKey] or {}
         diffRegion[chunkKey] = diffRegionChunk
 
+        -- compre blocks (local not exist and different block)
         for remoteBlockIndex, remoteBlock in pairs(remoteBlocks) do
             local localBlock = localBlocks[remoteBlockIndex]
 
@@ -98,6 +99,7 @@ function DiffWorldTask:ctor()
                localBlock.block_id ~= remoteBlock.block_id or
                localBlock.block_data ~= remoteBlock.block_data or
                localBlock.entity_data_md5 ~= remoteBlock.entity_data_md5 then
+
                 local x, y, z = BlockEngine:FromSparseIndex(remoteBlockIndex)
 
                 diffRegionChunk[remoteBlockIndex] = {
@@ -114,6 +116,7 @@ function DiffWorldTask:ctor()
             end
         end
 
+        -- compre blocks (remote not exist)
         for localBlockIndex, localBlock in pairs(localBlocks) do
             if not remoteBlocks[localBlockIndex] then
                 local x, y, z = BlockEngine:FromSparseIndex(localBlockIndex)
@@ -295,7 +298,7 @@ function DiffWorldTask:StartClient(ip, port)
         key, region = next(self.__regions__, key)
 
         if not region then
-            return self:Call('DiffWorldFinish', nil, function(data)
+            return self:Call('DiffWorldFinishRpc', nil, function(data)
                 self:DiffFinish(data)
             end)
         end 
@@ -312,7 +315,7 @@ function DiffWorldTask:StartClient(ip, port)
         end
     end
 
-    self:Call('DiffWorldStart', self.__regions__, function(remoteRegions)
+    self:Call('DiffWorldStartRpc', self.__regions__, function(remoteRegions)
         -- compare twice
         self:CompareRegion(remoteRegions)
 
@@ -377,7 +380,7 @@ function DiffWorldTask:DiffRegionChunkInfo(region, callback)
         data.chunk_generates[chunkKey] = chunk.is_generate
     end
 
-    self:Call('DiffRegionChunkInfo', data, function(chunks)
+    self:Call('DiffRegionChunkInfoRpc', data, function(chunks)
         remoteChunks = chunks
 
         -- for compare
@@ -455,7 +458,7 @@ function DiffWorldTask:DiffRegionChunkBlockInfo(chunk, callback)
     local blocks = self:LoadRegionChunkBlockInfo(chunk)
 
     self:Call(
-        'DiffRegionChunkBlockInfo',
+        'DiffRegionChunkBlockInfoRpc',
         {
             chunk = chunk,
             blocks = blocks
@@ -477,7 +480,7 @@ function DiffWorldTask:LoadRegionChunkBlockInfo(chunk)
     local startY = chunk.chunk_z * ChunkSize
     local blocks = {}
 
-    -- 16 * 16 * 256 blocks
+    -- 16(x) * 16(z) * 256(y) blocks
     for i = 0, 15 do
         for j = 0, 15 do
             local x = startX + i
@@ -498,7 +501,7 @@ function DiffWorldTask:LoadRegionChunkBlockInfo(chunk)
                             block_id = blockId,
                             block_data = blockData,
                             entity_data = entityData,
-                            entity_data_md5 = entityDataMd5
+                            entity_data_md5 = entityDataMd5,
                         }
                     end
                 end
