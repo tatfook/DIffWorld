@@ -66,29 +66,39 @@ function DiffWorldUI:Show(isLocal, diffs)
     for key, item in ipairs(self.regionList) do
         local chunkList = self:GetChunkList(item.region_key)
 
-        self.chunkList[#self.chunkList + 1] = chunkList
+        self.chunkList[key] = chunkList
     end
 
     -- get block list
-    for key, item in ipairs(self.chunkList) do
-        if item and type(item) == 'table' and #item > 0 then
-            for iKey, iItem in ipairs(item) do
-                local blockList = self:GetBlockList(iItem.region_key, iItem.chunk_key)
+    for key, chunk in ipairs(self.chunkList) do
+        self.blockList[key] = {}
+        local chunkBlockList = self.blockList[key]
 
-                self.blockList[#self.blockList + 1] = blockList
+        if chunk and type(chunk) == 'table' and #chunk > 0 then
+            for cKey, cItem in ipairs(chunk) do
+                local blockList = self:GetBlockList(cItem.region_key, cItem.chunk_key)
+
+                chunkBlockList[cKey] = blockList
             end
         end
     end
 
+    self.comprehansiveList[#self.comprehansiveList + 1] = {
+        title = L'更改：',
+        is_show = true,
+        category = 0,
+    }
+
     -- convert to 1 dimension array
     for key, item in ipairs(self.regionList) do
         local chunk = self.chunkList[key]
+
         local codeBlocks = {}
         local movieBlocks = {}
         local otherBlocks = {}
 
         for cKey, cItem in ipairs(chunk) do
-            local block = self.blockList[cKey]
+            local block = self.blockList[key][cKey]
 
             for bKey, bItem in ipairs(block) do
                 -- code block ID is: 219
@@ -130,11 +140,11 @@ function DiffWorldUI:Show(isLocal, diffs)
                     blockDetail.block_name = blockName
                     blockDetail.operate = 'DELETE'
 
-                    if blockDetail.local_block_id == 219 then
+                    if blockDetail.remote_block_id == 219 then
                         -- code blocks
                         blockDetail.block_type = 'CODE_BLOCKS'
                         codeBlocks[#codeBlocks + 1] = blockDetail
-                    elseif blockDetail.local_block_id == 228 then
+                    elseif blockDetail.remote_block_id == 228 then
                         -- movie blocks
                         blockDetail.block_type = 'MOVIE_BLOCKS'
                         movieBlocks[#movieBlocks + 1] = blockDetail

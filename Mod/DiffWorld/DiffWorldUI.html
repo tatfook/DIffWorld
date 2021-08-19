@@ -40,7 +40,7 @@
                         DiffWorldUI:RefreshTree()
                     end
 
-                    function click_block_type_title()
+                    function click_block_type_title(index)
                         local comprehansive_filter_list = DiffWorldUI.comprehansiveFilterList
                         local cur_item = comprehansive_filter_list[index]
                         local region_key = cur_item.region_key
@@ -65,7 +65,6 @@
                         local comprehansive_filter_list = DiffWorldUI.comprehansiveFilterList
                         local cur_item = comprehansive_filter_list[index]
 
-                        echo(cur_item, true)
                         GameLogic.RunCommand(format('/goto %s %s %s', cur_item.x, cur_item.y, cur_item.z))
                     end
 
@@ -147,6 +146,9 @@
                                  ItemsPerLine='1'
                                  name='diff_tree'>
                         <Columns>
+                            <pe:if condition='<%= Eval("category") == 0 %>'>
+                                <%= Eval('title') %>
+                            </pe:if>
                             <pe:if condition='<%= Eval("category") == 1 %>'>
                                 <div class="region-title title">
                                     <input type='button'
@@ -167,7 +169,7 @@
                                     <input type='button'
                                            width='100%'
                                            height='100%'
-                                           name='<% Eval("index") %>'
+                                           name='<%= Eval("index") %>'
                                            onclick='click_block_type_title'
                                            style='position: relative;
                                                   background:;'/>
@@ -190,13 +192,31 @@
                                         <pe:if condition='<%= Eval("operate") == "MODIFY" %>'>m</pe:if>
                                         <pe:if condition='<%= Eval("operate") == "DELETE" %>'>-</pe:if>
                                         <pe:if condition='<%= Eval("operate") == "ADD" %>'>+</pe:if>
-                                        <%= string.format(
+                                        <pe:if condition='<%= Eval("block_type") == "CODE_BLOCKS" %>' >
+                                            <%= string.format(
+                                                '坐标: %s, %s, %s',
+                                                Eval('x'),
+                                                Eval('y'),
+                                                Eval('z')
+                                            ) %>
+                                        </pe:if>
+                                        <pe:if condition='<%= Eval("block_type") == "MOVIE_BLOCKS" %>' >
+                                            <%= string.format(
+                                                '坐标: %s, %s, %s',
+                                                Eval('x'),
+                                                Eval('y'),
+                                                Eval('z')
+                                            ) %>
+                                        </pe:if>
+                                        <pe:if condition='<%= Eval("block_type") == "OTHER_BLOCKS" %>' >
+                                            <%= string.format(
                                                 '%s方块 坐标: %s, %s, %s',
                                                 Eval('block_name'),
                                                 Eval('x'),
                                                 Eval('y'),
                                                 Eval('z')
                                             ) %>
+                                        </pe:if>
                                     </div>
                                 </div>
                             </pe:if>
