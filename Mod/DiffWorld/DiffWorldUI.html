@@ -148,6 +148,9 @@
                         <Columns>
                             <pe:if condition='<%= Eval("category") == 0 %>'>
                                 <%= Eval('title') %>
+                                +<%= Eval('count_add') %>
+                                -<%= Eval('count_delete') %>
+                                m<%= Eval('count_modify') %>
                             </pe:if>
                             <pe:if condition='<%= Eval("category") == 1 %>'>
                                 <div class="region-title title">

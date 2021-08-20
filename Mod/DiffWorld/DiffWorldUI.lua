@@ -89,6 +89,10 @@ function DiffWorldUI:Show(isLocal, diffs)
         category = 0,
     }
 
+    local countAdd = 0
+    local countDelete = 0
+    local countModify = 0
+
     -- convert to 1 dimension array
     for key, item in ipairs(self.regionList) do
         local chunk = self.chunkList[key]
@@ -240,6 +244,10 @@ function DiffWorldUI:Show(isLocal, diffs)
         item.count_delete = codeBlocksCountDelete + movieBlocksCountDelete + otherBlocksCountDelete
         item.count_modify = codeBlocksCountModify + movieBlocksCountModify + otherBlocksCountModify
 
+        countAdd = countAdd + item.count_add
+        countDelete = countDelete + item.count_delete
+        countModify = countModify + item.count_modify
+
         self.comprehansiveList[#self.comprehansiveList + 1] = item
 
         if codeBlocks and #codeBlocks > 0 then
@@ -299,6 +307,10 @@ function DiffWorldUI:Show(isLocal, diffs)
             end
         end
     end
+
+    self.comprehansiveList[1].count_add = countAdd
+    self.comprehansiveList[1].count_delete = countDelete
+    self.comprehansiveList[1].count_modify = countModify
 
     local params = Mod.WorldShare.Utils.ShowWindow(
         400,
