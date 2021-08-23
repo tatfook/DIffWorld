@@ -64,14 +64,14 @@ function DiffWorldTask:ctor()
         return self.__regions__
     end)
 
-    -- 响应世界比较结束
+    -- Responsive compare world finish
     self:Register('DiffWorldFinishRpc', function()
         self:DiffFinish(self.__diffs__)
 
         return self.__diffs__
     end)
 
-    -- 响应方块信息
+    -- Response compare chunks information
     self:Register('DiffRegionChunkInfoRpc', function(data)
         return self:LoadRegionChunkInfo(
             self:GetRegion(data.region_key),
@@ -79,7 +79,7 @@ function DiffWorldTask:ctor()
         )
     end)
 
-    -- 响应方块比较
+    -- Response compare blocks
     self:Register('DiffRegionChunkBlockInfoRpc', function(data)
         local chunk = data.chunk
 
@@ -139,6 +139,13 @@ function DiffWorldTask:ctor()
         end
 
         return
+    end)
+
+    -- Set lead position
+    self:Register('SetLeadRpc', function(block)
+        if block and type(block) == 'table' then
+            GameLogic.RunCommand(format('/goto %s %s %s', block.x, block.y, block.z))
+        end
     end)
 end
 

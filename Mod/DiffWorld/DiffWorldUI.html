@@ -66,11 +66,28 @@
                         local cur_item = comprehansive_filter_list[index]
 
                         GameLogic.RunCommand(format('/goto %s %s %s', cur_item.x, cur_item.y, cur_item.z))
+                        DiffWorldUI.diffWorldTask:Call('SetLeadRpc', cur_item)
                     end
 
                     function close()
                         DiffWorldUI.diffWorldTask:OnClose()
                         page:CloseWindow()
+                    end
+
+                    function refresh_all()
+
+                    end
+
+                    function refresh_region()
+
+                    end
+
+                    function rollback()
+
+                    end
+
+                    function compare()
+
                     end
                 ]]>
             </script>
@@ -166,6 +183,7 @@
                                     +<%= Eval('count_add') %>
                                     -<%= Eval('count_delete') %>
                                     m<%= Eval('count_modify') %>
+                                    <input type='button' value='<%= L"刷新" %>' />
                                 </div>
                             </pe:if>
                             <pe:if condition='<%= Eval("category") == 2 and Eval("is_show") == true %>'>
@@ -203,6 +221,8 @@
                                                 Eval('y'),
                                                 Eval('z')
                                             ) %>
+                                            <input type='button' value='<%= L"回滚" %>' />
+                                            <input type='button' value='<%= L"查看" %>' />
                                         </pe:if>
                                         <pe:if condition='<%= Eval("block_type") == "MOVIE_BLOCKS" %>' >
                                             <%= string.format(
@@ -211,6 +231,7 @@
                                                 Eval('y'),
                                                 Eval('z')
                                             ) %>
+                                            <input type='button' value='<%= L"回滚" %>' />
                                         </pe:if>
                                         <pe:if condition='<%= Eval("block_type") == "OTHER_BLOCKS" %>' >
                                             <%= string.format(
@@ -220,6 +241,7 @@
                                                 Eval('y'),
                                                 Eval('z')
                                             ) %>
+                                            <input type='button' value='<%= L"回滚" %>' />
                                         </pe:if>
                                     </div>
                                 </div>
