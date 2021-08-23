@@ -20,6 +20,7 @@ local SlashCommand = commonlib.gettable('MyCompany.Aries.SlashCommand.SlashComma
 local lfs = commonlib.Files.GetLuaFileSystem()
 local CommonLib = NPL.load('Mod/GeneralGameServerMod/CommonLib/CommonLib.lua')
 local RPCVirtualConnection = NPL.load('Mod/GeneralGameServerMod/CommonLib/RPCVirtualConnection.lua', IsDevEnv)
+local Desktop = commonlib.gettable('MyCompany.Aries.Creator.Game.Desktop')
 
 -- service
 local KeepworkServiceProject = NPL.load('(gl)Mod/WorldShare/service/KeepworkService/Project.lua')
@@ -50,6 +51,11 @@ end
 
 function DiffWorldTask:ctor()
     self:Reset()
+
+    -- close client
+    self:Register('DiffWorldCloseRpc', function()
+        Desktop.ForceExit(false)
+    end)
 
     -- Responsive compare world start
     self:Register('DiffWorldStartRpc', function(remote_regions)
@@ -537,9 +543,16 @@ function DiffWorldTask:DiffFinish(diffs)
 
     if not self:IsRemoteWorld() then
         DiffWorldUI:Show(isLocal, diffs)
+        DiffWorldUI.diffWorldTask = self
     end
+end
+
+function DiffWorldTask:OnClose()
+    self:Call('DiffWorldCloseRpc', nil, function()
+        self:Reset()
+    end)
 end
 
 NPL.this(function()
     __rpc__:OnActivate(msg)
-end);
+end)
