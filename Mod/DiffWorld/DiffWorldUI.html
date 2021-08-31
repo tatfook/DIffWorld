@@ -65,7 +65,11 @@
                         local comprehansive_filter_list = DiffWorldUI.comprehansiveFilterList
                         local cur_item = comprehansive_filter_list[index]
 
+                        -- set local
                         GameLogic.RunCommand(format('/goto %s %s %s', cur_item.x, cur_item.y, cur_item.z))
+                        DiffWorldUI:ShowCurRegionDifferent(cur_item.region_key)
+
+                        -- set remote
                         DiffWorldUI.diffWorldTask:Call('SetLeadRpc', cur_item)
                     end
 

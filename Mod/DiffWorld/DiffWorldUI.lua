@@ -93,6 +93,10 @@ function DiffWorldUI:Show(isLocal, diffs)
     local countDelete = 0
     local countModify = 0
 
+    self.codeBlocks = {}
+    self.movieBlocks = {}
+    self.otherBlocks = {}
+
     -- convert to 1 dimension array
     for key, item in ipairs(self.regionList) do
         local chunk = self.chunkList[key]
@@ -127,14 +131,17 @@ function DiffWorldUI:Show(isLocal, diffs)
                         -- code blocks
                         blockDetail.block_type = 'CODE_BLOCKS'
                         codeBlocks[#codeBlocks + 1] = blockDetail
+                        self.codeBlocks[#self.codeBlocks + 1] = blockDetail
                     elseif blockDetail.local_block_id == 228 then
                         -- movie blocks
                         blockDetail.block_type = 'MOVIE_BLOCKS'
                         movieBlocks[#movieBlocks + 1] = blockDetail
+                        self.movieBlocks[#self.movieBlocks + 1] = blockDetail
                     else
                         -- other blocks
                         blockDetail.block_type = 'OTHER_BLOCKS'
                         otherBlocks[#otherBlocks + 1] = blockDetail
+                        self.otherBlocks[#self.otherBlocks + 1] = blockDetail
                     end
                 end
 
@@ -148,14 +155,17 @@ function DiffWorldUI:Show(isLocal, diffs)
                         -- code blocks
                         blockDetail.block_type = 'CODE_BLOCKS'
                         codeBlocks[#codeBlocks + 1] = blockDetail
+                        self.codeBlocks[#self.codeBlocks + 1] = blockDetail
                     elseif blockDetail.remote_block_id == 228 then
                         -- movie blocks
                         blockDetail.block_type = 'MOVIE_BLOCKS'
                         movieBlocks[#movieBlocks + 1] = blockDetail
+                        self.movieBlocks[#self.movieBlocks + 1] = blockDetail
                     else
                         -- other blocks
                         blockDetail.block_type = 'OTHER_BLOCKS'
                         otherBlocks[#otherBlocks + 1] = blockDetail
+                        self.otherBlocks[#self.otherBlocks + 1] = blockDetail
                     end
                 end
 
@@ -169,14 +179,17 @@ function DiffWorldUI:Show(isLocal, diffs)
                         -- code blocks
                         blockDetail.block_type = 'CODE_BLOCKS'
                         codeBlocks[#codeBlocks + 1] = blockDetail
+                        self.codeBlocks[#self.codeBlocks + 1] = blockDetail
                     elseif blockDetail.local_block_id == 228 then
                         -- movie blocks
                         blockDetail.block_type = 'MOVIE_BLOCKS'
                         movieBlocks[#movieBlocks + 1] = blockDetail
+                        self.movieBlocks[#self.movieBlocks + 1] = blockDetail
                     else
                         -- other blocks
                         blockDetail.block_type = 'OTHER_BLOCKS'
                         otherBlocks[#otherBlocks + 1] = blockDetail
+                        self.otherBlocks[#self.otherBlocks + 1] = blockDetail
                     end
                 end
             end
@@ -428,7 +441,7 @@ function DiffWorldUI:GetBlockList(regionKey, chunkKey)
             {
                 x = block.x,
                 y = block.y,
-                z= block.z,
+                z = block.z,
                 block_index = blockIndex
             }
         )
@@ -476,4 +489,36 @@ function DiffWorldUI:GetBlockDetail(block, regionKey, chunkKey)
     detail.is_equal_entity_data = detail.local_entity_data == detail.remote_entity_data
 
     return detail
+end
+
+function DiffWorldUI:ShowCurRegionDifferent(selRegionKey)
+    if not selRegionKey or type(selRegionKey) ~= 'string' then
+        return
+    end
+
+    ParaTerrain.DeselectAllBlock(0)
+    ParaTerrain.DeselectAllBlock(3)
+
+    -- show current region blocks differents
+    local function Handle(data)
+        if data and
+           type(data) == 'table' and
+           #data > 0 then
+            for key, item in ipairs(data) do
+                if selRegionKey == item.region_key then
+                    if item.operate == 'ADD' then
+                        ParaTerrain.SelectBlock(item.x, item.y, item.z, true, 0)
+                    elseif item.operate == 'DELETE' then
+                        ParaTerrain.SelectBlock(item.x, item.y, item.z, true, 3)
+                    elseif item.operate == 'MODIFY' then
+                        ParaTerrain.SelectBlock(item.x, item.y, item.z, true, 0)
+                    end
+                end
+            end
+        end
+    end
+
+    Handle(self.codeBlocks)
+    Handle(self.movieBlocks)
+    Handle(self.otherBlocks)
 end
