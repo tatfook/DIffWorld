@@ -522,3 +522,16 @@ function DiffWorldUI:ShowCurRegionDifferent(selRegionKey)
     Handle(self.movieBlocks)
     Handle(self.otherBlocks)
 end
+
+function DiffWorldUI:ShowCodeDiff()
+    Mod.WorldShare.Utils.ShowWindow(
+        0,
+        0,
+        'Mod/DiffWorld/CodeDiff.html',
+        'Mod.DiffWorld.CodeDiff',
+        0,
+        0,
+        '_fi',
+        false
+    ) 
+end

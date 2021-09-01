@@ -19,9 +19,12 @@ CODE GUIDELINE
 
 ]]
 
--- libs
 NPL.load('(gl)script/apps/Aries/Creator/Game/Commands/CommandManager.lua')
 NPL.load('(gl)script/apps/Aries/Creator/Game/block_engine.lua')
+NPL.load('(gl)script/apps/Aries/Creator/Game/Tasks/DestroyBlockTask.lua')
+NPL.load("(gl)script/apps/Aries/Creator/Game/Tasks/CreateBlockTask.lua")
+
+-- libs
 
 -- command
 local DiffWorldCommand = NPL.load('./DiffWorldCommand.lua')

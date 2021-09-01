@@ -7,6 +7,9 @@
                     local DiffWorldUI = NPL.load('./DiffWorldUI.lua')
 
                     -- libs
+                    local BlockEngine = commonlib.gettable('MyCompany.Aries.Game.BlockEngine')
+                    local DestroyBlock = commonlib.gettable('MyCompany.Aries.Game.Tasks.DestroyBlock')
+                    local CreateBlock = commonlib.gettable('MyCompany.Aries.Game.Tasks.CreateBlock')
 
                     local page = document:GetPageCtrl()
 
@@ -86,12 +89,37 @@
 
                     end
 
-                    function rollback()
+                    function click_rollback(index)
+                        local comprehansive_filter_list = DiffWorldUI.comprehansiveFilterList
+                        local cur_item = comprehansive_filter_list[index]
 
+                        echo(cur_item, true)
+
+                        if cur_item.operate == 'ADD' then
+                            DestroyBlock:new({
+                                blockX = cur_item.x,
+                                blockY = cur_item.y,
+                                blockZ = cur_item.z
+                            }):Run()
+                        elseif cur_item.operate == 'DELETE' then
+                            CreateBlock:new({
+                                blockX = cur_item.x,
+                                blockY = cur_item.y,
+                                blockZ = cur_item.z,
+                                block_id = cur_item.remote_block_id
+                            }):Run()
+                        elseif cur_item.operate == 'MODIFY' then
+                            BlockEngine:SetBlock(
+                                cur_item.x,
+                                cur_item.y,
+                                cur_item.z,
+                                cur_item.remote_block_id
+                            )
+                        end
                     end
 
-                    function compare()
-
+                    function click_code_diff()
+                        DiffWorldUI:ShowCodeDiff()
                     end
                 ]]>
             </script>
@@ -225,8 +253,14 @@
                                                 Eval('y'),
                                                 Eval('z')
                                             ) %>
-                                            <input type='button' value='<%= L"回滚" %>' />
-                                            <input type='button' value='<%= L"查看" %>' />
+                                            <input type='button'
+                                                   value='<%= L"回滚" %>'
+                                                   name='<%= Eval("index") %>'
+                                                   onclick='click_rollback' />
+                                            <input type='button'
+                                                   name='<%= Eval("index") %>'
+                                                   value='<%= L"查看" %>'
+                                                   onclick='click_code_diff' />
                                         </pe:if>
                                         <pe:if condition='<%= Eval("block_type") == "MOVIE_BLOCKS" %>' >
                                             <%= string.format(
@@ -235,7 +269,10 @@
                                                 Eval('y'),
                                                 Eval('z')
                                             ) %>
-                                            <input type='button' value='<%= L"回滚" %>' />
+                                            <input type='button'
+                                                   value='<%= L"回滚" %>'
+                                                   name='<%= Eval("index") %>'
+                                                   onclick='click_rollback' />
                                         </pe:if>
                                         <pe:if condition='<%= Eval("block_type") == "OTHER_BLOCKS" %>' >
                                             <%= string.format(
@@ -245,7 +282,10 @@
                                                 Eval('y'),
                                                 Eval('z')
                                             ) %>
-                                            <input type='button' value='<%= L"回滚" %>' />
+                                            <input type='button'
+                                                   value='<%= L"回滚" %>'
+                                                   name='<%= Eval("index") %>'
+                                                   onclick='click_rollback' />
                                         </pe:if>
                                     </div>
                                 </div>
