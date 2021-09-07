@@ -52,6 +52,12 @@ end
 function DiffWorldTask:ctor()
     self:Reset()
 
+    -- refresh data
+    self:Register('DiffWorldRefreshRpc', function()
+        self:Reset()
+        self:StartClient()
+    end)
+
     -- close client
     self:Register('DiffWorldCloseRpc', function()
         Desktop.ForceExit(false)
@@ -527,30 +533,14 @@ end
 
 function DiffWorldTask:DiffFinish(diffs)
     local isLocal = self:IsLocal()
-    local regions = diffs.__regions__
-    local regionCount = 0
-    local chunkCount = 0
-    local blockCount = 0
-
-    for _, region in pairs(regions) do
-        regionCount = regionCount + 1
-
-        local chunkCount = 0
-
-        for _, chunk in pairs(region) do
-            chunkCount = chunkCount + 1
-
-            for _, block in pairs(chunk) do
-                blockCount = blockCount + 1
-            end
-        end
-
-        chunkCount = chunkCount + chunkCount
-    end
 
     if not self:IsRemoteWorld() then
-        DiffWorldUI:Show(isLocal, diffs)
-        DiffWorldUI.diffWorldTask = self
+        if not DiffWorldUI.diffWorldTask then
+            DiffWorldUI:Show(isLocal, diffs)
+            DiffWorldUI.diffWorldTask = self
+        else
+            DiffWorldUI:RefreshDataCallback(isLocal, diffs)
+        end
     end
 end
 

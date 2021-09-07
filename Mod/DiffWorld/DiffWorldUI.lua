@@ -54,6 +54,36 @@ local DiffWorldUI = NPL.export()
 ]]
 
 function DiffWorldUI:Show(isLocal, diffs)
+    self:HandleData(isLocal, diffs)
+
+    local params = Mod.WorldShare.Utils.ShowWindow(
+        400,
+        800,
+        'Mod/DiffWorld/DiffWorldUI.html',
+        'Mod.DiffWorld.DiffWorldUI',
+        0,
+        0,
+        '_lt'
+    )
+
+    self:RefreshTree()
+end
+
+function DiffWorldUI:Reset()
+    self.comprehansiveList = {}
+    self.comprehansiveFilterList = {}
+    self.regionList = {}
+    self.chunkList = {}
+    self.blockList = {}
+    self.blockDetail = {}
+    self.regionKey = '' -- 当前区域KEY
+    self.chunkKey = '' -- 当前区块KEY
+    self.blockIndex = '' -- 当前方块索引
+    self.isLocal = nil
+    self.diffs = { __regions__ = {} }
+end
+
+function DiffWorldUI:HandleData(isLocal, diffs)
     self:Reset()
 
     self.isLocal = isLocal
@@ -324,32 +354,6 @@ function DiffWorldUI:Show(isLocal, diffs)
     self.comprehansiveList[1].count_add = countAdd
     self.comprehansiveList[1].count_delete = countDelete
     self.comprehansiveList[1].count_modify = countModify
-
-    local params = Mod.WorldShare.Utils.ShowWindow(
-        400,
-        800,
-        'Mod/DiffWorld/DiffWorldUI.html',
-        'Mod.DiffWorld.DiffWorldUI',
-        0,
-        0,
-        '_lt'
-    )
-
-    self:RefreshTree()
-end
-
-function DiffWorldUI:Reset()
-    self.comprehansiveList = {}
-    self.comprehansiveFilterList = {}
-    self.regionList = {}
-    self.chunkList = {}
-    self.blockList = {}
-    self.blockDetail = {}
-    self.regionKey = '' -- 当前区域KEY
-    self.chunkKey = '' -- 当前区块KEY
-    self.blockIndex = '' -- 当前方块索引
-    self.isLocal = nil
-    self.diffs = { __regions__ = {} }
 end
 
 function DiffWorldUI:RefreshTree()
@@ -369,6 +373,22 @@ function DiffWorldUI:RefreshTree()
     end
 
     page:GetNode('diff_tree'):SetUIAttribute('DataSource', self.comprehansiveFilterList)
+end
+
+function DiffWorldUI:RefreshData()
+    local page = Mod.WorldShare.Store:Get('page/Mod.DiffWorld.DiffWorldUI')
+
+    if not page then
+        return
+    end
+
+    self.diffWorldTask:Reset()
+    self.diffWorldTask:Call('DiffWorldRefreshRpc')
+end
+
+function DiffWorldUI:RefreshDataCallback(isLocal, diffs)
+    self:HandleData(isLocal, diffs)
+    self:RefreshTree()
 end
 
 function DiffWorldUI:GetRegionList()

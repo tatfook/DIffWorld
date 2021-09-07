@@ -7,6 +7,7 @@
                     local DiffWorldUI = NPL.load('./DiffWorldUI.lua')
 
                     -- libs
+                    local TableCodec = commonlib.gettable('commonlib.TableCodec')
                     local BlockEngine = commonlib.gettable('MyCompany.Aries.Game.BlockEngine')
                     local DestroyBlock = commonlib.gettable('MyCompany.Aries.Game.Tasks.DestroyBlock')
                     local CreateBlock = commonlib.gettable('MyCompany.Aries.Game.Tasks.CreateBlock')
@@ -78,22 +79,20 @@
 
                     function close()
                         DiffWorldUI.diffWorldTask:OnClose()
+                        DiffWorldUI.diffWorldTask = nil
                         page:CloseWindow()
+
+                        ParaTerrain.DeselectAllBlock(0)
+                        ParaTerrain.DeselectAllBlock(3)
                     end
 
                     function refresh_all()
-
-                    end
-
-                    function refresh_region()
-
+                        DiffWorldUI:RefreshData()
                     end
 
                     function click_rollback(index)
                         local comprehansive_filter_list = DiffWorldUI.comprehansiveFilterList
                         local cur_item = comprehansive_filter_list[index]
-
-                        echo(cur_item, true)
 
                         if cur_item.operate == 'ADD' then
                             DestroyBlock:new({
@@ -101,13 +100,46 @@
                                 blockY = cur_item.y,
                                 blockZ = cur_item.z
                             }):Run()
+
+                            ParaTerrain.SelectBlock(
+                                cur_item.x,
+                                cur_item.y,
+                                cur_item.z,
+                                false,
+                                0
+                            )
                         elseif cur_item.operate == 'DELETE' then
-                            CreateBlock:new({
-                                blockX = cur_item.x,
-                                blockY = cur_item.y,
-                                blockZ = cur_item.z,
-                                block_id = cur_item.remote_block_id
-                            }):Run()
+                        echo(cur_item, true)
+                            if cur_item.block_type == 'CODE_BLOCKS' or
+                               cur_item.block_type == 'MOVIE_BLOCKS' then
+                                local table_code_c = TableCodec:new()
+                                local code_block_data = table_code_c:Decode(cur_item.remote_entity_data)
+
+                                BlockEngine:SetBlock(
+                                    cur_item.x,
+                                    cur_item.y,
+                                    cur_item.z,
+                                    cur_item.remote_block_id,
+                                    nil,
+                                    nil,
+                                    code_block_data
+                                )
+                            else
+                                CreateBlock:new({
+                                    blockX = cur_item.x,
+                                    blockY = cur_item.y,
+                                    blockZ = cur_item.z,
+                                    block_id = cur_item.remote_block_id
+                                }):Run()
+                            end
+
+                            ParaTerrain.SelectBlock(
+                                cur_item.x,
+                                cur_item.y,
+                                cur_item.z,
+                                false,
+                                3
+                            )
                         elseif cur_item.operate == 'MODIFY' then
                             BlockEngine:SetBlock(
                                 cur_item.x,
@@ -115,11 +147,32 @@
                                 cur_item.z,
                                 cur_item.remote_block_id
                             )
+
+                            ParaTerrain.SelectBlock(
+                                cur_item.x,
+                                cur_item.y,
+                                cur_item.z,
+                                false,
+                                0
+                            )
                         end
                     end
 
-                    function click_code_diff()
-                        DiffWorldUI:ShowCodeDiff()
+                    function click_code_diff(index)
+                        local comprehansive_filter_list = DiffWorldUI.comprehansiveFilterList
+                        local cur_item = comprehansive_filter_list[index]
+
+                        local table_code_c = TableCodec:new()
+                        local code_block_data = table_code_c:Decode(cur_item.remote_entity_data)
+                        
+                        echo(code_block_data, true)
+                        echo(cur_item, true)
+
+                        local cur_block_data = BlockEngine:GetBlockEntityData(cur_item.x, cur_item.y, cur_item.z)
+                        echo(cur_block_data, true)
+
+                        echo('----------------------', true)
+                        -- DiffWorldUI:ShowCodeDiff()
                     end
                 ]]>
             </script>
@@ -184,7 +237,9 @@
                     <div style='float: left'><%= L'对比' %></div>
                     <div style='float: left'><%= L'远程版本：3' %></div>
                     <div style='float: left'>
-                        <input type='button' value='<%= L"刷新" %>' />
+                        <input type='button'
+                               value='<%= L"刷新" %>'
+                               onclick='refresh_all' />
                     </div>
                 </div>
                 <div>
@@ -215,7 +270,9 @@
                                     +<%= Eval('count_add') %>
                                     -<%= Eval('count_delete') %>
                                     m<%= Eval('count_modify') %>
-                                    <input type='button' value='<%= L"刷新" %>' />
+                                    <input type='button'
+                                           value='<%= L"刷新" %>'
+                                           onclick='refresh_all'  />
                                 </div>
                             </pe:if>
                             <pe:if condition='<%= Eval("category") == 2 and Eval("is_show") == true %>'>
