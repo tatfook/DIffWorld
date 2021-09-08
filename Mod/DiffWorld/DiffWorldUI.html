@@ -164,15 +164,25 @@
 
                         local table_code_c = TableCodec:new()
                         local code_block_data = table_code_c:Decode(cur_item.remote_entity_data)
-                        
-                        echo(code_block_data, true)
-                        echo(cur_item, true)
+
+                        local function get_code(data)
+                            if not data or type(data) ~= 'table' then
+                                return '' 
+                            end
+
+                            for key, item in ipairs(data) do
+                                if item and type(item) == 'table' and item.name == 'cmd' then
+                                    return item[1]
+                                end
+                            end
+                        end
 
                         local cur_block_data = BlockEngine:GetBlockEntityData(cur_item.x, cur_item.y, cur_item.z)
-                        echo(cur_block_data, true)
 
-                        echo('----------------------', true)
-                        -- DiffWorldUI:ShowCodeDiff()
+                        local local_code = get_code(code_block_data)
+                        local remote_code = get_code(cur_block_data)
+
+                        DiffWorldUI:ShowCodeDiff(local_code, remote_code)
                     end
                 ]]>
             </script>

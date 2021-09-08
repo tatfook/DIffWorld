@@ -543,8 +543,11 @@ function DiffWorldUI:ShowCurRegionDifferent(selRegionKey)
     Handle(self.otherBlocks)
 end
 
-function DiffWorldUI:ShowCodeDiff()
-    Mod.WorldShare.Utils.ShowWindow(
+function DiffWorldUI:ShowCodeDiff(localCode, remoteCode)
+    DiffWorldUI.localCode = localCode
+    DiffWorldUI.remoteCode = remoteCode
+
+    local params = Mod.WorldShare.Utils.ShowWindow(
         0,
         0,
         'Mod/DiffWorld/CodeDiff.html',
@@ -553,5 +556,5 @@ function DiffWorldUI:ShowCodeDiff()
         0,
         '_fi',
         false
-    ) 
+    )
 end

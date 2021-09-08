@@ -2,9 +2,39 @@
     <body>
         <pe:mcml>
             <script type='text/npl'>
+                <![CDATA[
+                    -- bottles
+                    local DiffWorldUI = NPL.load('./DiffWorldUI.lua')
+
+                    local page = document:GetPageCtrl()
+
+                    function close()
+                        page:CloseWindow()
+                        DiffWorldUI.localCode = nil
+                        DiffWorldUI.remoteCode = nil
+                    end
+
+                    function get_local_code()
+                        return DiffWorldUI.localCode
+                    end
+
+                    function get_remote_code()
+                        return DiffWorldUI.remoteCode
+                    end
+                ]]>
             </script>
-            <div>
-                CODE DIFF PAGE!!!
+            <div width='100%'
+                 height='100%'
+                 style='background-color: #FFFFFFCC'>
+                <div>
+                    <input type='button' text='close' onclick='close' />
+                </div>
+                <div width='50%' style='float: left;'>
+                    <%= get_local_code() %>
+                </div>
+                <div width='50%' style='float: left;'>
+                    <%= get_remote_code() %>
+                </div>
             </div>
         </pe:mcml>
     </body>
