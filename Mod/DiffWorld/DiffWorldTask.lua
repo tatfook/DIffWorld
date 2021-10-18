@@ -2,7 +2,7 @@
 Title: Diff World Task
 Author(s):  big, wxa
 CreateDate: 2020.06.12
-UpdateDate: 2021.08.09
+ModifyDate: 2021.08.09
 Desc: DiffWorldTask
 use the lib:
 ------------------------------------------------------------
@@ -12,6 +12,7 @@ local DiffWorldTask = NPL.load('(gl)Mod/DiffWorld/DiffWorldTask.lua')
 
 -- bottles
 local DiffWorldUI = NPL.load('./DiffWorldUI.lua')
+local LocalServiceWorld = NPL.load("(gl)Mod/WorldShare/service/LocalService/LocalServiceWorld.lua")
 
 -- libs
 local BlockEngine = commonlib.gettable('MyCompany.Aries.Game.BlockEngine')
@@ -19,7 +20,7 @@ local CommandManager = commonlib.gettable('MyCompany.Aries.Game.CommandManager')
 local SlashCommand = commonlib.gettable('MyCompany.Aries.SlashCommand.SlashCommand')
 local lfs = commonlib.Files.GetLuaFileSystem()
 local CommonLib = NPL.load('Mod/GeneralGameServerMod/CommonLib/CommonLib.lua')
-local RPCVirtualConnection = NPL.load('Mod/GeneralGameServerMod/CommonLib/RPCVirtualConnection.lua', IsDevEnv)
+local RPCVirtualConnection = NPL.load('Mod/GeneralGameServerMod/CommonLib/RPCVirtualConnection.lua')
 local Desktop = commonlib.gettable('MyCompany.Aries.Creator.Game.Desktop')
 
 -- service
@@ -161,6 +162,10 @@ function DiffWorldTask:Reset()
 end
 
 function DiffWorldTask:DownloadWorldById(pid, callback)
+    if not callback or type(callback) ~= 'function' then
+        return
+    end
+
     local currentEnterWorld = GameLogic.GetFilters():apply_filters('store_get', 'world/currentEnterWorld')
 
     if not pid or type(pid) ~= 'number' then
@@ -183,43 +188,17 @@ function DiffWorldTask:DownloadWorldById(pid, callback)
             return
         end
 
-        GitService:DownloadZIP(
+        Mod.WorldShare.MsgBox:Wait()
+
+        LocalServiceWorld:DownLoadZipWorld(
             data.name,
             data.username,
             data.world.commitId,
-            function(bSuccess, downloadPath)
-                if not bSuccess then
-                    if callback and type(callback) == 'function' then
-                        callback(false)
-                    end
+            'temp/diff_world/',
+            function(bSucceed)
+                Mod.WorldShare.MsgBox:Close()
 
-                    return
-                end
-
-                local tempDiffWorldDirectory = 'temp/diff_world/'
-
-                -- clear old files
-                ParaIO.DeleteFile(tempDiffWorldDirectory)
-                ParaIO.CreateDirectory(tempDiffWorldDirectory)
-
-                LocalService:MoveZipToFolder(
-                    tempDiffWorldDirectory,
-                    downloadPath,
-                    function()
-                        -- 次函数无出错处理 可能产生未知情况 
-                        for filename in lfs.dir(tempDiffWorldDirectory) do
-                            if (filename ~= "." and filename ~= "..") then
-                                local worldPath = tempDiffWorldDirectory .. filename
-
-                                if callback and type(callback) == 'function' then
-                                    callback(true, worldPath)
-                                end
-
-                                return
-                            end
-                        end
-                    end
-                )
+                callback(bSucceed, 'temp/diff_world/')
             end
         )
     end)
